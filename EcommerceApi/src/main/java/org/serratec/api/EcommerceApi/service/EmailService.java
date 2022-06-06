@@ -7,14 +7,18 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import org.serratec.api.EcommerceApi.DTO.PedidoDTO;
+import org.serratec.api.EcommerceApi.DTO.ProdutoDTO;
 import org.serratec.api.EcommerceApi.exception.EmailException;
 import org.serratec.api.EcommerceApi.exception.PedidoException;
 import org.serratec.api.EcommerceApi.model.Cliente;
 import org.serratec.api.EcommerceApi.model.Pedido;
+import org.serratec.api.EcommerceApi.model.Produto;
 import org.serratec.api.EcommerceApi.model.VendasItem;
 import org.serratec.api.EcommerceApi.repository.ClienteRepository;
+import org.serratec.api.EcommerceApi.repository.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -41,6 +45,9 @@ public class EmailService {
 	
 	@Autowired
 	ClienteRepository clienteRepository;
+	
+	@Autowired
+	ProdutoRepository produtoRepository;
 		
 	public JavaMailSender javaMailSender() {
 	
@@ -60,15 +67,15 @@ public class EmailService {
 	return enviarEmail;
 	}
 	
-//	public void sendMessage(String to, String subject, String text) {
-//
-//		SimpleMailMessage message = new SimpleMailMessage();
-//		message.setFrom(emailRemetente);
-//		message.setTo(to);
-//		message.setSubject(subject);
-//		message.setText(text);
-//		emailSender.send(message);
-//	}
+	public void sendMessage(String to, String subject, String text) {
+
+		SimpleMailMessage message = new SimpleMailMessage();
+		message.setFrom(emailRemetente);
+		message.setTo(to);
+		message.setSubject(subject);
+		message.setText(text);
+		emailSender.send(message);
+	}
 	
 	public void emailCliente(PedidoDTO pedidoDTO, Pedido pedido) throws EmailException, MessagingException, PedidoException {
 
@@ -106,6 +113,41 @@ public class EmailService {
                             +"</div><div>\nAtt: Equipe do EcommercAPI!!</div>"
                             +"</body>"
                             +"</html>", pedido.getValorTotal()));
+            helper.setText(sBuilder.toString(), true);
+            emailSender.send(message);
+        } catch (Exception e) {
+        	throw new EmailException ("Houve erro ao enviar o email " + e.getMessage());
+        }
+	}
+	public void emailProprietario(Produto produto) throws EmailException, MessagingException, PedidoException {
+
+        this.emailSender = javaMailSender();
+        MimeMessage message = emailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+      
+        String destinatario = "jeffspaixao@gmail.com";
+        
+			
+        try {
+        	
+        	
+        	
+            helper.setFrom(emailRemetente);
+            helper.setTo(destinatario);
+
+            helper.setSubject("Relatório de estoque baixo!");
+
+            StringBuilder sBuilder = new StringBuilder();
+            sBuilder.append("<html>\r\n"
+                            + "<body>\r\n"
+                            +"<h1>ECommerce</h1>"
+                            +"<h2>Atenção!!</h2>"
+                            +"<div>\r\nOs produtos abaixo estão com a quantidade abaixo de 5 unidades!\r\n</div>"
+                            +"<div>\r\n PRODUTOS: \n</div>"
+                            +produto.getNome() + "\t" + produto.getQtdEstoque()
+                            +"</div><div>\nAtt: Equipe do EcommercAPI!!</div>"
+                            +"</body>"
+                            +"</html>");
             helper.setText(sBuilder.toString(), true);
             emailSender.send(message);
         } catch (Exception e) {
